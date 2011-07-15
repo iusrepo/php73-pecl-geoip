@@ -6,7 +6,7 @@
 
 Name:		php-pecl-geoip
 Version:	1.0.7
-Release:	5%{?dist}
+Release:	6%{?dist}
 Summary:	Extension to map IP addresses to geographic places
 Group:		Development/Languages
 License:	PHP
@@ -14,17 +14,15 @@ URL:		http://pecl.php.net/package/%{pecl_name}
 Source0:	http://pecl.php.net/get/%{pecl_name}-%{version}.tgz
 BuildRoot:	%{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 
-BuildRequires:	GeoIP-devel php-devel php-pear >= 1:1.4.0
+BuildRequires:	GeoIP-devel
+BuildRequires:  php-devel
+BuildRequires:  php-pear >= 1:1.4.0
+Requires:       php(zend-abi) = %{php_zend_api}
+Requires:       php(api) = %{php_core_api}
 Requires(post):	%{__pecl}
 Requires(postun):	%{__pecl}
-Provides:	php-pecl(geoip) = %{version}
+Provides:	php-pecl(%{pecl_name}) = %{version}
 
-%if %{?php_zend_api}0
-Requires:	php(zend-abi) = %{php_zend_api}
-Requires:	php(api) = %{php_core_api}
-%else
-Requires:	php-api = %{php_apiver}
-%endif
 
 %description
 This PHP extension allows you to find the location of an IP address 
@@ -62,18 +60,14 @@ EOF
 %clean
 %{__rm} -rf %{buildroot}
 
-%if 0%{?pecl_install:1}
 %post
 %{pecl_install} %{pecl_xmldir}/%{name}.xml >/dev/null || :
-%endif
 
 
-%if 0%{?pecl_uninstall:1}
 %postun
-if [ $1 -eq 0 ]; then
+if [ $1 -eq 0 ]  ; then
 %{pecl_uninstall} %{pecl_name} >/dev/null || :
 fi
-%endif
 
 %files
 %defattr(-,root,root,-)
@@ -83,6 +77,9 @@ fi
 %{pecl_xmldir}/%{name}.xml
 
 %changelog
+* Fri Jul 15 2011 Andrew Colin Kissa <andrew@topdog.za.net> - 1.0.7-6
+- Fix bugzilla #715693
+
 * Wed Feb 09 2011 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 1.0.7-5
 - Rebuilt for https://fedoraproject.org/wiki/Fedora_15_Mass_Rebuild
 
