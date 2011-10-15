@@ -1,4 +1,3 @@
-%global php_apiver	%((echo 0; php -i 2>/dev/null | sed -n 's/^PHP API => //p') | tail -1)
 %{!?__pecl:		%{expand: %%global __pecl     %{_bindir}/pecl}}
 %{!?php_extdir:		%{expand: %%global php_extdir %(php-config --extension-dir)}}
 
@@ -6,14 +5,19 @@
 
 Name:		php-pecl-geoip
 Version:	1.0.7
-Release:	6%{?dist}
+Release:	7%{?dist}
 Summary:	Extension to map IP addresses to geographic places
 Group:		Development/Languages
 License:	PHP
 URL:		http://pecl.php.net/package/%{pecl_name}
 Source0:	http://pecl.php.net/get/%{pecl_name}-%{version}.tgz
-BuildRoot:	%{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 
+# https://bugs.php.net/bug.php?id=60066
+Patch0:		geoip-build.patch
+# https://bugs.php.net/bug.php?id=59804
+Patch1:		geoip-tests.patch
+
+BuildRoot:	%{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 BuildRequires:	GeoIP-devel
 BuildRequires:  php-devel
 BuildRequires:  php-pear >= 1:1.4.0
@@ -22,6 +26,12 @@ Requires:       php(api) = %{php_core_api}
 Requires(post):	%{__pecl}
 Requires(postun):	%{__pecl}
 Provides:	php-pecl(%{pecl_name}) = %{version}
+
+# RPM 4.8
+%{?filter_provides_in: %filter_provides_in %{php_extdir}/.*\.so$}
+%{?filter_setup}
+# RPM 4.9
+%global __provides_exclude_from %{?__provides_exclude_from:%__provides_exclude_from|}%{php_extdir}/.*\\.so$
 
 
 %description
@@ -34,6 +44,11 @@ database
 %setup -c -q
 [ -f package2.xml ] || %{__mv} package.xml package2.xml
 %{__mv} package2.xml %{pecl_name}-%{version}/%{pecl_name}.xml
+
+cd %{pecl_name}-%{version}
+%patch0 -p3 -b .build
+%patch1 -p0 -b .tests
+
 
 %build
 cd %{pecl_name}-%{version}
@@ -57,6 +72,18 @@ EOF
 %{__install} -p -m 644 %{pecl_name}.xml %{buildroot}%{pecl_xmldir}/%{name}.xml
 
 
+%check
+cd %{pecl_name}-%{version}
+
+TEST_PHP_EXECUTABLE=%{_bindir}/php \
+REPORT_EXIT_STATUS=1 \
+NO_INTERACTION=1 \
+%{_bindir}/php run-tests.php \
+    -n -q \
+    -d extension_dir=modules \
+    -d extension=%{pecl_name}.so
+
+
 %clean
 %{__rm} -rf %{buildroot}
 
@@ -77,6 +104,12 @@ fi
 %{pecl_xmldir}/%{name}.xml
 
 %changelog
+* Sat Oct 15 2011 Remi Collet <remi@fedoraproject.org> - 1.0.7-7
+- fix segfault when build with latest GeoIP (#746417)
+- run test suite during build
+- add patch for tests, https://bugs.php.net/bug.php?id=59804
+- add filter to avoid private-shared-object-provides geoip.so
+
 * Fri Jul 15 2011 Andrew Colin Kissa <andrew@topdog.za.net> - 1.0.7-6
 - Fix bugzilla #715693
 
