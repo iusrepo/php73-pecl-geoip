@@ -4,16 +4,14 @@
 %define pecl_name geoip
 
 Name:		php-pecl-geoip
-Version:	1.0.7
-Release:	8%{?dist}
+Version:	1.0.8
+Release:	1%{?dist}
 Summary:	Extension to map IP addresses to geographic places
 Group:		Development/Languages
 License:	PHP
 URL:		http://pecl.php.net/package/%{pecl_name}
 Source0:	http://pecl.php.net/get/%{pecl_name}-%{version}.tgz
 
-# https://bugs.php.net/bug.php?id=60066
-Patch0:		geoip-build.patch
 # https://bugs.php.net/bug.php?id=59804
 Patch1:		geoip-tests.patch
 
@@ -45,8 +43,14 @@ database
 [ -f package2.xml ] || %{__mv} package.xml package2.xml
 %{__mv} package2.xml %{pecl_name}-%{version}/%{pecl_name}.xml
 
+# Upstream often forget this
+extver=$(sed -n '/#define PHP_GEOIP_VERSION/{s/.* "//;s/".*$//;p}' %{pecl_name}-%{version}/php_geoip.h)
+if test "x${extver}" != "x%{version}"; then
+   : Error: Upstream version is ${extver}, expecting %{version}.
+   exit 1
+fi
+
 cd %{pecl_name}-%{version}
-%patch0 -p3 -b .build
 %patch1 -p0 -b .tests
 
 
@@ -104,6 +108,9 @@ fi
 %{pecl_xmldir}/%{name}.xml
 
 %changelog
+* Thu Jan 19 2012 Remi Collet <remi@fedoraproject.org> - 1.0.8-1
+- update to 1.0.8 for php 5.4
+
 * Sat Jan 14 2012 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 1.0.7-8
 - Rebuilt for https://fedoraproject.org/wiki/Fedora_17_Mass_Rebuild
 
