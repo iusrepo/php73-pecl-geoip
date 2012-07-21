@@ -5,7 +5,7 @@
 
 Name:		php-pecl-geoip
 Version:	1.0.8
-Release:	1%{?dist}
+Release:	2%{?dist}
 Summary:	Extension to map IP addresses to geographic places
 Group:		Development/Languages
 License:	PHP
@@ -108,6 +108,9 @@ fi
 %{pecl_xmldir}/%{name}.xml
 
 %changelog
+* Sat Jul 21 2012 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 1.0.8-2
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_18_Mass_Rebuild
+
 * Thu Jan 19 2012 Remi Collet <remi@fedoraproject.org> - 1.0.8-1
 - update to 1.0.8 for php 5.4
 
