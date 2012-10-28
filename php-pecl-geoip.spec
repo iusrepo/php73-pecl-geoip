@@ -1,11 +1,12 @@
-%{!?__pecl:		%{expand: %%global __pecl     %{_bindir}/pecl}}
-%{!?php_extdir:		%{expand: %%global php_extdir %(php-config --extension-dir)}}
+%global php_apiver  %((echo 0; php -i 2>/dev/null | sed -n 's/^PHP API => //p') | tail -1)
+%{!?__pecl:     %{expand: %%global __pecl     %{_bindir}/pecl}}
+%{!?php_extdir: %{expand: %%global php_extdir %(php-config --extension-dir)}}
 
 %define pecl_name geoip
 
 Name:		php-pecl-geoip
 Version:	1.0.8
-Release:	2%{?dist}
+Release:	3%{?dist}
 Summary:	Extension to map IP addresses to geographic places
 Group:		Development/Languages
 License:	PHP
@@ -17,10 +18,14 @@ Patch1:		geoip-tests.patch
 
 BuildRoot:	%{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 BuildRequires:	GeoIP-devel
-BuildRequires:  php-devel
-BuildRequires:  php-pear >= 1:1.4.0
-Requires:       php(zend-abi) = %{php_zend_api}
-Requires:       php(api) = %{php_core_api}
+BuildRequires:	php-devel
+BuildRequires:	php-pear >= 1:1.4.0
+%if 0%{?php_zend_api:1}
+Requires:     php(zend-abi) = %{php_zend_api}
+Requires:     php(api) = %{php_core_api}
+%else
+Requires:     php-api = %{php_apiver}
+%endif
 Requires(post):	%{__pecl}
 Requires(postun):	%{__pecl}
 Provides:	php-pecl(%{pecl_name}) = %{version}
@@ -92,14 +97,18 @@ EOF
 %clean
 %{__rm} -rf %{buildroot}
 
+
+%if 0%{?pecl_install:1}
 %post
 %{pecl_install} %{pecl_xmldir}/%{name}.xml >/dev/null || :
+%endif
 
-
+%if 0%{?pecl_uninstall:1}
 %postun
 if [ $1 -eq 0 ]  ; then
 %{pecl_uninstall} %{pecl_name} >/dev/null || :
 fi
+%endif
 
 %files
 %defattr(-,root,root,-)
@@ -109,6 +118,9 @@ fi
 %{pecl_xmldir}/%{name}.xml
 
 %changelog
+* Sun Oct 28 2012 Andrew Colin Kissa <andrew@topdog.za.net> - 1.0.8-3
+- Fix php spec file macros
+
 * Sat Jul 21 2012 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 1.0.8-2
 - Rebuilt for https://fedoraproject.org/wiki/Fedora_18_Mass_Rebuild
 
