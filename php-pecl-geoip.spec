@@ -3,10 +3,15 @@
 %{!?php_extdir: %{expand: %%global php_extdir %(php-config --extension-dir)}}
 
 %define pecl_name geoip
+%if "%{php_version}" < "5.6"
+%global ini_name  %{pecl_name}.ini
+%else
+%global ini_name  40-%{pecl_name}.ini
+%endif
 
 Name:		php-pecl-geoip
 Version:	1.0.8
-Release:	7%{?dist}
+Release:	8%{?dist}
 Summary:	Extension to map IP addresses to geographic places
 Group:		Development/Languages
 License:	PHP
@@ -72,7 +77,7 @@ cd %{pecl_name}-%{version}
 %{__make} install INSTALL_ROOT=%{buildroot} INSTALL="install -p"
 
 %{__mkdir_p} %{buildroot}%{_sysconfdir}/php.d
-%{__cat} > %{buildroot}%{_sysconfdir}/php.d/%{pecl_name}.ini << 'EOF'
+%{__cat} > %{buildroot}%{_sysconfdir}/php.d/%{ini_name} << 'EOF'
 ; Enable %{pecl_name} extension module
 extension=%{pecl_name}.so
 EOF
@@ -113,11 +118,15 @@ fi
 %files
 %defattr(-,root,root,-)
 %doc %{pecl_name}-%{version}/{README,ChangeLog}
-%config(noreplace) %{_sysconfdir}/php.d/%{pecl_name}.ini
+%config(noreplace) %{_sysconfdir}/php.d/%{ini_name}
 %{php_extdir}/%{pecl_name}.so
 %{pecl_xmldir}/%{name}.xml
 
 %changelog
+* Thu Jun 19 2014 Remi Collet <rcollet@redhat.com> - 1.0.8-8
+- rebuild for https://fedoraproject.org/wiki/Changes/Php56
+- add numerical prefix to extension configuration file
+
 * Sat Jun 07 2014 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 1.0.8-7
 - Rebuilt for https://fedoraproject.org/wiki/Fedora_21_Mass_Rebuild
 
