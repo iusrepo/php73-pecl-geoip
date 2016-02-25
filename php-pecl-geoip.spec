@@ -11,7 +11,7 @@
 
 Name:		php-pecl-geoip
 Version:	1.0.8
-Release:	11%{?dist}
+Release:	12%{?dist}
 Summary:	Extension to map IP addresses to geographic places
 Group:		Development/Languages
 License:	PHP
@@ -31,8 +31,10 @@ Requires:     php(api) = %{php_core_api}
 %else
 Requires:     php-api = %{php_apiver}
 %endif
+%if 0%{?fedora} < 24
 Requires(post):	%{__pecl}
 Requires(postun):	%{__pecl}
+%endif
 Provides:	php-pecl(%{pecl_name}) = %{version}
 
 # RPM 4.8
@@ -103,6 +105,7 @@ EOF
 %{__rm} -rf %{buildroot}
 
 
+%if 0%{?fedora} < 24
 %if 0%{?pecl_install:1}
 %post
 %{pecl_install} %{pecl_xmldir}/%{name}.xml >/dev/null || :
@@ -114,6 +117,7 @@ if [ $1 -eq 0 ]  ; then
 %{pecl_uninstall} %{pecl_name} >/dev/null || :
 fi
 %endif
+%endif
 
 %files
 %defattr(-,root,root,-)
@@ -123,6 +127,9 @@ fi
 %{pecl_xmldir}/%{name}.xml
 
 %changelog
+* Thu Feb 25 2016 Remi Collet <remi@fedoraproject.org> - 1.0.8-12
+- drop scriptlets (replaced by file triggers in php-pear #1310546)
+
 * Thu Feb 04 2016 Fedora Release Engineering <releng@fedoraproject.org> - 1.0.8-11
 - Rebuilt for https://fedoraproject.org/wiki/Fedora_24_Mass_Rebuild
 
