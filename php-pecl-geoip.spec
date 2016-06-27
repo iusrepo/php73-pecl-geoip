@@ -10,38 +10,30 @@
 %endif
 
 Name:		php-pecl-geoip
-Version:	1.0.8
-Release:	12%{?dist}
+Version:	1.1.0
+Release:	1%{?dist}
 Summary:	Extension to map IP addresses to geographic places
 Group:		Development/Languages
 License:	PHP
 URL:		http://pecl.php.net/package/%{pecl_name}
 Source0:	http://pecl.php.net/get/%{pecl_name}-%{version}.tgz
 
-# https://bugs.php.net/bug.php?id=59804
-Patch1:		geoip-tests.patch
+# http://svn.php.net/viewvc?view=revision&revision=333464
+Patch0:         geoip-build.patch
+# http://svn.php.net/viewvc?view=revision&revision=335948
+Patch1:         geoip-php7.patch
 
-BuildRoot:	%{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 BuildRequires:	GeoIP-devel
 BuildRequires:	php-devel
-BuildRequires:	php-pear >= 1:1.4.0
-%if 0%{?php_zend_api:1}
-Requires:     php(zend-abi) = %{php_zend_api}
-Requires:     php(api) = %{php_core_api}
-%else
-Requires:     php-api = %{php_apiver}
-%endif
-%if 0%{?fedora} < 24
-Requires(post):	%{__pecl}
-Requires(postun):	%{__pecl}
-%endif
-Provides:	php-pecl(%{pecl_name}) = %{version}
+BuildRequires:	php-pear
 
-# RPM 4.8
-%{?filter_provides_in: %filter_provides_in %{php_extdir}/.*\.so$}
-%{?filter_setup}
-# RPM 4.9
-%global __provides_exclude_from %{?__provides_exclude_from:%__provides_exclude_from|}%{php_extdir}/.*\\.so$
+Requires:       php(zend-abi) = %{php_zend_api}
+Requires:       php(api) = %{php_core_api}
+
+Provides:       php-%{pecl_name}               = %{version}
+Provides:       php-%{pecl_name}%{?_isa}       = %{version}
+Provides:       php-pecl(%{pecl_name})         = %{version}
+Provides:       php-pecl(%{pecl_name})%{?_isa} = %{version}
 
 
 %description
@@ -50,83 +42,89 @@ City, State, Country, Longitude, Latitude, and other information as
 all, such as ISP and connection type. It makes use of Maxminds geoip
 database
 
+
 %prep
 %setup -c -q
-[ -f package2.xml ] || %{__mv} package.xml package2.xml
-%{__mv} package2.xml %{pecl_name}-%{version}/%{pecl_name}.xml
 
+# Don't install/register tests
+sed -e 's/role="test"/role="src"/' \
+    -e '/LICENSE/s/role="doc"/role="src"/' \
+    -i package.xml
+
+cat > %{ini_name} << 'EOF'
+; Enable %{pecl_name} extension module
+extension=%{pecl_name}.so
+EOF
+
+cd %{pecl_name}-%{version}
 # Upstream often forget this
-extver=$(sed -n '/#define PHP_GEOIP_VERSION/{s/.* "//;s/".*$//;p}' %{pecl_name}-%{version}/php_geoip.h)
+extver=$(sed -n '/#define PHP_GEOIP_VERSION/{s/.* "//;s/".*$//;p}' php_geoip.h)
 if test "x${extver}" != "x%{version}"; then
    : Error: Upstream version is ${extver}, expecting %{version}.
    exit 1
 fi
 
-cd %{pecl_name}-%{version}
-%patch1 -p0 -b .tests
+%patch0 -p0 -b .svn
+%patch1 -p3 -b .svn
 
 
 %build
 cd %{pecl_name}-%{version}
 phpize
-%configure
-%{__make} %{?_smp_mflags}
+%configure --with-php-config=%{_bindir}/php-config
+make %{?_smp_mflags}
 
 
 %install
+make -C %{pecl_name}-%{version} install INSTALL_ROOT=%{buildroot} INSTALL="install -p"
+
+# Install XML package description
+install -Dpm 644 package.xml %{buildroot}%{pecl_xmldir}/%{name}.xml
+
+# install config file
+install -Dpm644 %{ini_name} %{buildroot}%{php_inidir}/%{ini_name}
+
+# Documentation
 cd %{pecl_name}-%{version}
-%{__rm} -rf %{buildroot}
-%{__make} install INSTALL_ROOT=%{buildroot} INSTALL="install -p"
-
-%{__mkdir_p} %{buildroot}%{_sysconfdir}/php.d
-%{__cat} > %{buildroot}%{_sysconfdir}/php.d/%{ini_name} << 'EOF'
-; Enable %{pecl_name} extension module
-extension=%{pecl_name}.so
-EOF
-
-%{__mkdir_p} %{buildroot}%{pecl_xmldir}
-%{__install} -p -m 644 %{pecl_name}.xml %{buildroot}%{pecl_xmldir}/%{name}.xml
+for i in $(grep 'role="doc"' ../package.xml | sed -e 's/^.*name="//;s/".*$//')
+do install -Dpm 644 $i %{buildroot}%{pecl_docdir}/%{pecl_name}/$i
+done
 
 
-#broken on el5 ppc
-#%check
-#cd %{pecl_name}-%{version}
+%check
+cd %{pecl_name}-%{version}
+: Minimal load test for NTS extension
+%{__php} -n \
+    -d extension=%{buildroot}%{php_extdir}/%{pecl_name}.so \
+    -m | grep %{pecl_name}
 
-#TEST_PHP_EXECUTABLE=%{_bindir}/php \
-#REPORT_EXIT_STATUS=1 \
-#NO_INTERACTION=1 \
-#%{_bindir}/php run-tests.php \
-#    -n -q \
-#    -d extension_dir=modules \
-#    -d extension=%{pecl_name}.so
+# TODO America/Toronto instead of America/Montreal
+rm tests/013.phpt
 
+TEST_PHP_EXECUTABLE=%{__php} \
+REPORT_EXIT_STATUS=1 \
+NO_INTERACTION=1 \
+%{__php} run-tests.php \
+    -n -q \
+    -d extension_dir=modules \
+    -d extension=%{pecl_name}.so \
+    --show-diff
 
-%clean
-%{__rm} -rf %{buildroot}
-
-
-%if 0%{?fedora} < 24
-%if 0%{?pecl_install:1}
-%post
-%{pecl_install} %{pecl_xmldir}/%{name}.xml >/dev/null || :
-%endif
-
-%if 0%{?pecl_uninstall:1}
-%postun
-if [ $1 -eq 0 ]  ; then
-%{pecl_uninstall} %{pecl_name} >/dev/null || :
-fi
-%endif
-%endif
 
 %files
-%defattr(-,root,root,-)
-%doc %{pecl_name}-%{version}/{README,ChangeLog}
+%license %{pecl_name}-%{version}/LICENSE
+%doc %{pecl_docdir}/%{pecl_name}
 %config(noreplace) %{_sysconfdir}/php.d/%{ini_name}
 %{php_extdir}/%{pecl_name}.so
 %{pecl_xmldir}/%{name}.xml
 
+
 %changelog
+* Mon Jul 27 2016 Remi Collet <remi@fedoraproject.org> - 1.1.0-1
+- update to 1.1.0 (beta)
+- https://fedoraproject.org/wiki/Changes/php70
+- cleanup spec
+
 * Thu Feb 25 2016 Remi Collet <remi@fedoraproject.org> - 1.0.8-12
 - drop scriptlets (replaced by file triggers in php-pear #1310546)
 
