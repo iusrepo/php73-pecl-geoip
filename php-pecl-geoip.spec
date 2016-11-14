@@ -10,18 +10,13 @@
 %endif
 
 Name:		php-pecl-geoip
-Version:	1.1.0
+Version:	1.1.1
 Release:	1%{?dist}
 Summary:	Extension to map IP addresses to geographic places
 Group:		Development/Languages
 License:	PHP
 URL:		http://pecl.php.net/package/%{pecl_name}
 Source0:	http://pecl.php.net/get/%{pecl_name}-%{version}.tgz
-
-# http://svn.php.net/viewvc?view=revision&revision=333464
-Patch0:         geoip-build.patch
-# http://svn.php.net/viewvc?view=revision&revision=335948
-Patch1:         geoip-php7.patch
 
 BuildRequires:	GeoIP-devel
 BuildRequires:	php-devel
@@ -64,9 +59,6 @@ if test "x${extver}" != "x%{version}"; then
    exit 1
 fi
 
-%patch0 -p0 -b .svn
-%patch1 -p3 -b .svn
-
 
 %build
 cd %{pecl_name}-%{version}
@@ -98,8 +90,8 @@ cd %{pecl_name}-%{version}
     -d extension=%{buildroot}%{php_extdir}/%{pecl_name}.so \
     -m | grep %{pecl_name}
 
-# TODO America/Toronto instead of America/Montreal
-rm tests/013.phpt
+# Missing IPv6 data
+rm tests/019.phpt
 
 TEST_PHP_EXECUTABLE=%{__php} \
 REPORT_EXIT_STATUS=1 \
@@ -120,6 +112,9 @@ NO_INTERACTION=1 \
 
 
 %changelog
+* Mon Nov 14 2016 Remi Collet <remi@fedoraproject.org> - 1.1.1-1
+- update to 1.1.1
+
 * Mon Jul 27 2016 Remi Collet <remi@fedoraproject.org> - 1.1.0-1
 - update to 1.1.0 (beta)
 - https://fedoraproject.org/wiki/Changes/php70
