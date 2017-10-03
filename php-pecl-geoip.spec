@@ -1,7 +1,3 @@
-%global php_apiver  %((echo 0; php -i 2>/dev/null | sed -n 's/^PHP API => //p') | tail -1)
-%{!?__pecl:     %{expand: %%global __pecl     %{_bindir}/pecl}}
-%{!?php_extdir: %{expand: %%global php_extdir %(php-config --extension-dir)}}
-
 %define pecl_name geoip
 %if "%{php_version}" < "5.6"
 %global ini_name  %{pecl_name}.ini
