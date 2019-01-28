@@ -9,7 +9,6 @@ Name:		php-pecl-geoip
 Version:	1.1.1
 Release:	8%{?dist}
 Summary:	Extension to map IP addresses to geographic places
-Group:		Development/Languages
 License:	PHP
 URL:		http://pecl.php.net/package/%{pecl_name}
 Source0:	http://pecl.php.net/get/%{pecl_name}-%{version}.tgz
