@@ -97,7 +97,7 @@ NO_INTERACTION=1 \
 %files
 %license %{pecl_name}-%{version}/LICENSE
 %doc %{pecl_docdir}/%{pecl_name}
-%config(noreplace) %{_sysconfdir}/php.d/%{ini_name}
+%config(noreplace) %{php_inidir}/%{ini_name}
 %{php_extdir}/%{pecl_name}.so
 %{pecl_xmldir}/%{name}.xml
 
