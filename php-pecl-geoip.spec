@@ -6,8 +6,8 @@ Version:        1.1.1
 Release:        9%{?dist}
 Summary:        Extension to map IP addresses to geographic places
 License:        PHP
-URL:            http://pecl.php.net/package/%{pecl_name}
-Source0:        http://pecl.php.net/get/%{pecl_name}-%{version}.tgz
+URL:            https://pecl.php.net/package/%{pecl_name}
+Source0:        https://pecl.php.net/get/%{pecl_name}-%{version}.tgz
 
 BuildRequires:  GeoIP-devel
 BuildRequires:  php-devel
