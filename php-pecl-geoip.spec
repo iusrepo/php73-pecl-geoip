@@ -5,17 +5,17 @@
 %global ini_name  40-%{pecl_name}.ini
 %endif
 
-Name:		php-pecl-geoip
-Version:	1.1.1
-Release:	9%{?dist}
-Summary:	Extension to map IP addresses to geographic places
-License:	PHP
-URL:		http://pecl.php.net/package/%{pecl_name}
-Source0:	http://pecl.php.net/get/%{pecl_name}-%{version}.tgz
+Name:           php-pecl-geoip
+Version:        1.1.1
+Release:        9%{?dist}
+Summary:        Extension to map IP addresses to geographic places
+License:        PHP
+URL:            http://pecl.php.net/package/%{pecl_name}
+Source0:        http://pecl.php.net/get/%{pecl_name}-%{version}.tgz
 
-BuildRequires:	GeoIP-devel
-BuildRequires:	php-devel
-BuildRequires:	php-pear
+BuildRequires:  GeoIP-devel
+BuildRequires:  php-devel
+BuildRequires:  php-pear
 
 Requires:       php(zend-abi) = %{php_zend_api}
 Requires:       php(api) = %{php_core_api}
