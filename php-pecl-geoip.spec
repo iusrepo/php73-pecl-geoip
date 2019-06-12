@@ -1,4 +1,4 @@
-%define pecl_name geoip
+%global pecl_name geoip
 %if "%{php_version}" < "5.6"
 %global ini_name  %{pecl_name}.ini
 %else
