@@ -55,7 +55,7 @@ fi
 cd %{pecl_name}-%{version}
 phpize
 %configure --with-php-config=%{_bindir}/php-config
-make %{?_smp_mflags}
+%make_build
 
 
 %install
