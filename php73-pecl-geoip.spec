@@ -1,17 +1,19 @@
+%global php       php73
 %global pecl_name geoip
 %global ini_name  40-%{pecl_name}.ini
 
-Name:           php-pecl-geoip
+Name:           %{php}-pecl-geoip
 Version:        1.1.1
-Release:        9%{?dist}
+Release:        10%{?dist}
 Summary:        Extension to map IP addresses to geographic places
 License:        PHP
 URL:            https://pecl.php.net/package/%{pecl_name}
 Source0:        https://pecl.php.net/get/%{pecl_name}-%{version}.tgz
 
 BuildRequires:  GeoIP-devel
-BuildRequires:  php-devel
-BuildRequires:  php-pear
+BuildRequires:  %{php}-devel
+# build require pear1's dependencies to avoid mismatched php stacks
+BuildRequires:  pear1 %{php}-cli %{php}-common %{php}-xml
 
 Requires:       php(zend-abi) = %{php_zend_api}
 Requires:       php(api) = %{php_core_api}
@@ -20,6 +22,11 @@ Provides:       php-%{pecl_name}               = %{version}
 Provides:       php-%{pecl_name}%{?_isa}       = %{version}
 Provides:       php-pecl(%{pecl_name})         = %{version}
 Provides:       php-pecl(%{pecl_name})%{?_isa} = %{version}
+
+# safe replacement
+Provides:       php-pecl-%{pecl_name} = %{version}-%{release}
+Provides:       php-pecl-%{pecl_name}%{?_isa} = %{version}-%{release}
+Conflicts:      php-pecl-%{pecl_name} < %{version}-%{release}
 
 
 %description
@@ -62,7 +69,7 @@ phpize
 make -C %{pecl_name}-%{version} install INSTALL_ROOT=%{buildroot} INSTALL="install -p"
 
 # Install XML package description
-install -Dpm 644 package.xml %{buildroot}%{pecl_xmldir}/%{name}.xml
+install -Dpm 644 package.xml %{buildroot}%{pecl_xmldir}/%{pecl_name}.xml
 
 # install config file
 install -Dpm644 %{ini_name} %{buildroot}%{php_inidir}/%{ini_name}
@@ -94,15 +101,36 @@ NO_INTERACTION=1 \
     --show-diff
 
 
+%triggerin -- pear1
+if [ -x %{__pecl} ]; then
+    %{pecl_install} %{pecl_xmldir}/%{pecl_name}.xml >/dev/null || :
+fi
+
+
+%posttrans
+if [ -x %{__pecl} ]; then
+    %{pecl_install} %{pecl_xmldir}/%{pecl_name}.xml >/dev/null || :
+fi
+
+
+%postun
+if [ $1 -eq 0 -a -x %{__pecl} ]; then
+    %{pecl_uninstall} %{pecl_name} >/dev/null || :
+fi
+
+
 %files
 %license %{pecl_name}-%{version}/LICENSE
 %doc %{pecl_docdir}/%{pecl_name}
 %config(noreplace) %{php_inidir}/%{ini_name}
 %{php_extdir}/%{pecl_name}.so
-%{pecl_xmldir}/%{name}.xml
+%{pecl_xmldir}/%{pecl_name}.xml
 
 
 %changelog
+* Wed Jun 12 2019 Carl George <carl@george.computer> - 1.1.1-10
+- Port from Fedora to IUS
+
 * Sat Feb 02 2019 Fedora Release Engineering <releng@fedoraproject.org> - 1.1.1-9
 - Rebuilt for https://fedoraproject.org/wiki/Fedora_30_Mass_Rebuild
 
